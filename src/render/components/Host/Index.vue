@@ -19,21 +19,9 @@
         </template>
       </el-dropdown>
       <el-button-group>
-        <template v-if="isLock">
-          <el-tooltip placement="right" :content="I18nT('host.licenseTips')">
-            <el-button
-              :icon="Lock"
-              style="padding-left: 30px; padding-right: 30px"
-              @click="toLicense"
-              >{{ I18nT('common.action.add') }}</el-button
-            >
-          </el-tooltip>
-        </template>
-        <template v-else>
-          <el-button style="padding-left: 30px; padding-right: 30px" @click="toAdd">{{
-            I18nT('common.action.add')
-          }}</el-button>
-        </template>
+        <el-button style="padding-left: 30px; padding-right: 30px" @click="toAdd">{{
+          I18nT('common.action.add')
+        }}</el-button>
         <el-dropdown trigger="click" @command="handleCommand">
           <template #default>
             <el-button
@@ -113,25 +101,17 @@
   import { AppStore } from '@/store/app'
   import { I18nT } from '@lang/index'
   import { AsyncComponentShow } from '@/util/AsyncComponent'
-  import { More, ArrowDown, Lock } from '@element-plus/icons-vue'
+  import { More, ArrowDown } from '@element-plus/icons-vue'
   import { MessageError, MessageSuccess } from '@/util/Element'
   import type { AppHost } from '@shared/app'
   import { type HostProjectType, HostStore } from './store'
   import ListTomcat from './Tomcat/ListTable.vue'
   import VhostTmpl from './VhostTmpl/index.vue'
-  import { SetupStore } from '@/components/Setup/store'
-  import Router from '@/router'
   import { join, dirname } from '@/util/path-browserify'
   import { dialog, clipboard, shell, fs } from '@/util/NodeFn'
   import { splitHostAliases } from '@shared/siteRuntime'
 
   const appStore = AppStore()
-  const setupStore = SetupStore()
-
-  const isLock = computed(() => {
-    return !setupStore.isActive && appStore.hosts.length > 2
-  })
-
   const tabs = computed(() => {
     return [
       {
@@ -332,15 +312,6 @@
         AsyncComponentShow(res.default).then()
       })
     }
-  }
-  const toLicense = () => {
-    setupStore.tab = 'licenses'
-    appStore.currentPage = '/setup'
-    Router.push({
-      path: '/setup'
-    })
-      .then()
-      .catch()
   }
   const openCreateProject = () => {
     import('./CreateProject/new.vue').then((res) => {
