@@ -7,7 +7,6 @@ import {
   hostAlias,
   uuid,
   writeFile,
-  machineId,
   readdir,
   remove,
   removeByRoot,
@@ -30,7 +29,6 @@ import {
 } from '../Nginx/Host'
 import { setDirRole, updateAutoSSL, updateRootRule } from './Host'
 import { TaskAddPhpMyAdminSite, TaskAddRandomSite } from './Task'
-import { publicDecrypt } from 'crypto'
 import { fetchHostList, saveHostList } from './HostFile'
 import { validateTomcatSite, type TomcatSiteHost } from '../Tomcat/Site'
 import { appDebugLog, isMacOS, isWindows } from '@shared/utils'
@@ -153,41 +151,9 @@ export class Host extends Base {
         })
       }
 
-      let isLock = false
-      if (!global.Server.Licenses) {
-        isLock = hostList.length > 2
-      } else {
-        const getRSAKey = () => {
-          const a = '0+u/eiBrB/DAskp9HnoIgq1MDwwbQRv6rNxiBK/qYvvdXJHKBmAtbe0+SW8clzne'
-          const b = 'Kq1BrqQFebPxLEMzQ19yrUyei1nByQwzlX8r3DHbFqE6kV9IcwNh9yeW3umUw05F'
-          const c = 'zwIDAQAB'
-          const d = 'n7Yl8hRd195GT9h48GsW+ekLj2ZyL/O4rmYRlrNDtEAcDNkI0UG0NlG+Bbn2yN1t'
-          const e = 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzVJ3axtKGl3lPaUFN82B'
-          const f = 'XZW4pCiCvUTSMIU86DkBT/CmDw5n2fCY/FKMQue+WNkQn0mrRphtLH2x0NzIhg+l'
-          const g = 'Zkm1wi9pNWLJ8ZvugKZnHq+l9ZmOES/xglWjiv3C7/i0nUtp0sTVNaVYWRapFsTL'
-          const arr: string[] = [e, g, b, a, f, d, c]
-
-          const a1 = '-----'
-          const a2 = ' PUBLIC KEY'
-          const a3 = 'BEGIN'
-          const a4 = 'END'
-
-          arr.unshift([a1, a3, a2, a1].join(''))
-          arr.push([a1, a4, a2, a1].join(''))
-
-          return arr.join('\n')
-        }
-        const uuid = await machineId()
-        const uid = publicDecrypt(
-          getRSAKey(),
-          Buffer.from(global.Server.Licenses!, 'base64') as any
-        ).toString('utf-8')
-        isLock = uid !== uuid
-      }
-      if (flag === 'add' && isLock) {
-        reject(new Error(I18nT('host.licenseTips')))
-        return
-      }
+      // Site count is intentionally unrestricted in this fork. This changes
+      // only the local virtual-host count gate; other license-controlled
+      // features and the application's license state remain unchanged.
 
       // #700: backend symmetric check — reject add/edit when another site shares
       // the same name AND any same-protocol listening port (defends against
