@@ -91,7 +91,7 @@ async function readNginx(file: string, content: string): Promise<SourceSite[]> {
     const all = walk(nodes)
     const names = values(nodes, 'server_name').flatMap((node) => node.args)
     item.host.name = names[0] ?? ''
-    item.host.alias = names.slice(1).join('\n')
+    // 只预填主域名，别名由用户在核对步骤按需填写。
     const serviceRoot = dirname(dirname(dirname(file)))
     item.host.root = sourcePath(first(nodes, 'root') || '.', serviceRoot)
     if (!first(nodes, 'root')) item.blockers.push('未识别项目根目录')
@@ -173,7 +173,7 @@ function readApache(file: string, content: string): SourceSite[] {
     const field = (name: string) =>
       unquote(body.match(new RegExp(`^\\s*${name}\\s+(.+)$`, 'im'))?.[1] ?? '')
     item.host.name = field('ServerName').replace(/:\d+$/, '')
-    item.host.alias = field('ServerAlias').split(/\s+/).filter(Boolean).join('\n')
+    // 不迁入来源 ServerAlias，避免为不同站点自动填入相同别名。
     const serviceRoot = dirname(dirname(dirname(file)))
     item.host.root = sourcePath(field('DocumentRoot') || '.', serviceRoot)
     if (!field('DocumentRoot')) item.blockers.push('未识别项目根目录')
@@ -262,10 +262,6 @@ export async function scanPhpStudy(directory: string): Promise<ScanResult> {
     }
     if (previous.phpEndpoint && item.phpEndpoint && previous.phpEndpoint !== item.phpEndpoint)
       previous.blockers.push('来源 PHP 上游配置不一致')
-    const aliases = new Set(
-      [...previous.host.alias.split(/\s+/), ...item.host.alias.split(/\s+/)].filter(Boolean)
-    )
-    previous.host.alias = [...aliases].join('\n')
     if (item.host.useSSL) {
       if (
         previous.host.useSSL &&

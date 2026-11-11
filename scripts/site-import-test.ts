@@ -49,6 +49,7 @@ await writeFile(
   join(apache, 'good.conf'),
   `<VirtualHost *:8081>
 ServerName sample.test
+ServerAlias apache-alias.test alias.test
 DocumentRoot "${root}"
 FcgidWrapper "E:/phpstudy/Extensions/php/php8.2.9nts/php-cgi.exe" .php
 </VirtualHost>`
@@ -62,7 +63,7 @@ assert.deepEqual(candidate.blockers, [])
 assert.deepEqual(candidate.webServers, ['nginx', 'apache'])
 assert.equal(candidate.phpVersion, '8.2.9')
 assert.equal(candidate.host.root, root)
-assert.equal(candidate.host.alias, 'alias.test')
+assert.equal(candidate.host.alias, '', 'Nginx 与 Apache 合并后仍不自动填写别名')
 assert.equal(candidate.host.port.nginx, 8080)
 assert.equal(candidate.host.port.apache, 8081)
 assert.equal(candidate.host.port.nginx_ssl, 8443)
@@ -79,6 +80,8 @@ const php = {
   enable: true
 } as SoftInstalled
 const draft = createDraft(candidate, [php])
+assert.equal(draft.host.alias, '', '核对草稿默认别名为空')
+draft.host.alias = 'manual-alias.test'
 assert.ok(draft.versionKey)
 assert.deepEqual(draftProblems(draft, [draft], [php], []), [])
 assert.ok(draftProblems(draft, [draft], [], []).some((value) => value.includes('PHP')))
@@ -87,6 +90,7 @@ assert.ok(
 )
 const selection = selectionOf(draft, [php])
 assert.equal(selection.confirmed, true, '导入按钮提交当前快照，无逐行确认门槛')
+assert.equal(selection.host.alias, 'manual-alias.test', '用户手动填写的别名保留到导入快照')
 
 const apacheDraft = createDraft(
   {
@@ -113,7 +117,7 @@ const blockedDraft = createDraft({ ...candidate, key: 'blocked', blockers: ['未
 ])
 const rows = [draft, apacheDraft, unknownDraft, blockedDraft]
 assert.equal(
-  filterDrafts(rows, { domain: '  ALIAS.TEST ', phpVersion: '', webServer: '' })[0],
+  filterDrafts(rows, { domain: '  MANUAL-ALIAS.TEST ', phpVersion: '', webServer: '' })[0],
   draft
 )
 assert.deepEqual(

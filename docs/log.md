@@ -137,3 +137,23 @@
 - 按用户要求将当前 4.20.4 源码、phpStudy 导入插件 0.1.1、相关测试及文档整理提交至 pro。
 - 已核对远程 pro 的 7 条额外历史提交，其最终文件树与本次开发基线一致；从 origin/pro 创建本地 pro，保留远程历史。
 - 安装包、dist、tmp、本机数据及凭据不纳入版本提交。
+
+## 2026-11-11 导入插件 0.1.2 别名留空
+
+- 扫描器不再将 Nginx 附加域名或 Apache ServerAlias 填入别名，合并站点时不补入别名；保留展开行手动输入及既有重复校验。
+- 更新回归覆盖默认空别名、Nginx/Apache 合并和手动别名筛选及提交。站点导入测试、独立插件安装加载测试及 ESLint 通过。
+- 已构建 release/plugins/phpstudy-import/phpstudy-import-0.1.2.flyenv-plugin 并更新本地 registry.json，大小 391441 字节，SHA-256 为 336722E7E22D6428BF0B281467763DDB2010226F042AE3794F6A7A83A1052D00。
+- 当前运行的正式应用仍加载 0.1.1，本次未替换运行中的插件或重启应用；更新插件后重新扫描生效，现有站点及已生成草稿不自动清空别名。
+
+## 2026-11-11 本地站点 503 排查
+
+- 用户反馈本地域名 www.yaoyujian.com 返回 Service Unavailable。固定解析到 127.0.0.1 请求复现 Apache 503。
+- 站点指向 E:/Work/yaoyujian/code-master/public，PHP 后端为 127.0.0.1:9085；Apache 日志记录 AH00957/AH01079 连接拒绝，Nginx 既有日志也指向相同未监听端口。
+- 未发现 php-cgi 进程或 9085 监听，D:/FlyEnv-Data/app/php-8.5.12 程序文件存在。界面显示 PHP 开关禁用。建议进入 PHP 页面选择并启动 8.5.12，再验证页面。
+- 桌面工具无法完成点击，返回 coordinate input geometry is unavailable；未启动 PHP，未修改站点配置或应用源码。
+
+
+## 2026-11-11 提交插件 0.1.2
+
+- 将别名默认留空的插件 0.1.2、回归测试及相关文档提交至 pro，保留手动别名输入。
+- 已核对本地与 origin/pro 基线一致；本次代码与已通过导入回归、插件安装加载和 ESLint 的代码一致。
