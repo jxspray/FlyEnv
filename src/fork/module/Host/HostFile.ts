@@ -3,6 +3,8 @@ import type { AppHost } from '@shared/app'
 import { existsSync } from 'fs'
 import { readFile, writeFile } from '../../Fn'
 import { createRequire } from 'node:module'
+import { rename, writeFile as writeAtomicFile, unlink } from 'node:fs/promises'
+import { randomUUID } from 'node:crypto'
 const require = createRequire(import.meta.url)
 
 const NodeRSA = require('node-rsa')
@@ -75,5 +77,12 @@ export const saveHostList = async (list: any) => {
   let content = JSON.stringify(list)
   const key = new NodeRSA(RSAPrivateKey)
   content = key.encryptPrivate(content, 'base64')
-  await writeFile(hostfile, content)
+  // 先完整写临时文件再替换，磁盘写入失败时保留原有站点列表。
+  const temporary = `${hostfile}.${randomUUID()}.tmp`
+  try {
+    await writeAtomicFile(temporary, content, 'utf8')
+    await rename(temporary, hostfile)
+  } finally {
+    await unlink(temporary).catch(() => {})
+  }
 }

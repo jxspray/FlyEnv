@@ -16,7 +16,6 @@ import {
   type FlyEnvPluginI18nText,
   type FlyEnvPluginManifest
 } from '@shared/plugin/PluginManifest'
-import { verifyLicenseCode } from '@shared/license'
 
 const PLUGIN_STATE_VERSION = 2
 
@@ -84,7 +83,6 @@ export type PluginManagerOptions = {
   fetchImpl?: typeof fetch
   stopPluginServices?: (moduleId: string) => Promise<{ stopped: true }>
   recoverPluginRuntime?: (moduleId: string) => Promise<void>
-  licenseCheck?: () => Promise<boolean>
   secretProtect?: PluginSecretProtection | (() => PluginSecretProtection | undefined)
 }
 
@@ -154,7 +152,6 @@ export class PluginManager {
   private readonly fetchImpl: typeof fetch
   private readonly stopPluginServices?: (moduleId: string) => Promise<{ stopped: true }>
   private readonly recoverPluginRuntime?: PluginManagerOptions['recoverPluginRuntime']
-  private readonly licenseCheck: () => Promise<boolean>
   private readonly secretProtect?: PluginManagerOptions['secretProtect']
   private readonly operations = new Map<string, Promise<unknown>>()
   private operationTail: Promise<void> = Promise.resolve()
@@ -177,7 +174,6 @@ export class PluginManager {
     this.fetchImpl = options.fetchImpl ?? proxiedFetch
     this.stopPluginServices = options.stopPluginServices
     this.recoverPluginRuntime = options.recoverPluginRuntime
-    this.licenseCheck = options.licenseCheck ?? (() => verifyLicenseCode(global.Server.Licenses))
     this.secretProtect = options.secretProtect
   }
 
@@ -525,7 +521,7 @@ export class PluginManager {
 
   /**
    * Scan-time guard: require a matching local install record, or migrate a
-   * version 1 record with an active license. This prevents an ordinary copy
+   * version 1 record. This prevents an ordinary copy
    * of plugin files from activating without a corresponding local record.
    */
   private async assertScannedPluginAllowed(record: FlyEnvPluginRecord) {
@@ -533,9 +529,7 @@ export class PluginManager {
     if (!state?.activeVersion) {
       throw new Error(`Plugin was not installed through the plugin manager: ${record.manifest.id}`)
     }
-    if (!state.installToken && this.legacyState && !(await this.licenseCheck())) {
-      throw new Error(`An active license is required to migrate plugin: ${record.manifest.id}`)
-    }
+
     const manifestRaw = await fs.readFile(join(record.rootPath, 'plugin.json'), 'utf8')
     const token = await this.computeInstallToken(
       record.manifest.id,
@@ -836,9 +830,7 @@ export class PluginManager {
     if (!isPluginApiSupported(input.apiVersion))
       throw new Error('Update FlyEnv to install this plugin')
     this.assertSourceUrl(input.url)
-    if (!(await this.licenseCheck())) {
-      throw new Error('An active license is required to install or update plugins')
-    }
+
     if (input.source && !input.sha256) {
       throw new Error('Plugin catalog installs require a SHA-256 checksum')
     }

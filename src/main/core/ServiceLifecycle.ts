@@ -28,7 +28,6 @@ export function serviceLifecycleAction(
     command === 'startService' ||
     command === 'startUiServer' ||
     command === 'startGroupServer' ||
-    (module === 'cloudflare-tunnel' && command === 'start') ||
     (typeof command === 'string' && command.startsWith('open'))
   )
     return 'start'

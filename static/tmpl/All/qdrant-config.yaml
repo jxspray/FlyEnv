@@ -331,7 +331,7 @@ cluster:
 
 # Set to true to prevent service from sending usage statistics to the developers.
 # Read more: https://qdrant.tech/documentation/guides/telemetry
-telemetry_disabled: false
+telemetry_disabled: true
 
 # TLS configuration.
 # Required if either service.enable_tls or cluster.p2p.enable_tls is true.

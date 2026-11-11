@@ -10,6 +10,8 @@ import electronBuilderConfig from '../configs/electron-builder.win.local'
 import { DoFix } from './fix'
 import { buildLanguageAssets } from './build-language-assets'
 import { isWindows } from '../src/shared/utils'
+import { writeUpdateManifest } from './update-manifest'
+import { readFile } from 'node:fs/promises'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -35,6 +37,11 @@ async function main() {
     publish: 'never',
     config: electronBuilderConfig
   })
+  const { version } = JSON.parse(await readFile(path.resolve(__dirname, '../package.json'), 'utf8'))
+  await writeUpdateManifest(
+    path.resolve(__dirname, `../release/FlyEnv-Local-Setup-${version}.exe`),
+    version
+  )
   console.log(
     '\nUnsigned Windows build completed in',
     Math.floor((Date.now() - buildStart) / 1000),

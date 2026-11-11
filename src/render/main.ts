@@ -10,7 +10,6 @@ import './style/dark.scss'
 import './style/light.scss'
 import { ThemeInit } from '@/util/Theme'
 import { AppToolStore } from '@/components/Tools/store'
-import { SetupStore } from '@/components/Setup/store'
 import { AppLogStore } from '@/components/AppLog/store'
 import { AppCustomerModule } from '@/core/Module'
 import CapturerSetup from '@/components/Tools/Capturer/setup'
@@ -57,11 +56,7 @@ IPC.on('APP-Ready-To-Show').then((key: string, res: any) => {
       })
     SiteSuckerStore().init()
     AppToolStore.init()
-    SetupStore()
-      .init()
-      .then(() => {
-        CapturerSetup.init()
-      })
+    CapturerSetup.init()
     AppLogStore.init().then().catch()
   } else {
     console.log('has inited !!!!')

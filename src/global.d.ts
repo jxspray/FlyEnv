@@ -48,8 +48,6 @@ export interface ServerType {
   UserDocuments?: string
   /** main 从实际 Windows 系统目录生成并广播，renderer 不自行猜测 C: 盘。 */
   WindowsHostsFile?: string
-  Licenses?: string
-  UserUUID?: string
   LangCustomer?: any
   isMacOS?: boolean
   isLinux?: boolean

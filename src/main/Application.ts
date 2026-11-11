@@ -4,7 +4,6 @@ import {
 } from '@shared/PerformanceDiagnostics'
 import { EventEmitter } from 'events'
 import { app, BrowserWindow, globalShortcut, safeStorage, session } from 'electron'
-import is from 'electron-is'
 import WindowManager from './ui/WindowManager'
 import MenuManager from './ui/MenuManager'
 import TrayManager from './ui/TrayManager'
@@ -53,7 +52,6 @@ import {
   capturerRuntime,
   httpServerRuntime,
   nodePtyRuntime,
-  oauthRuntime,
   siteSuckerRuntime
 } from './core/lazy/OptionalRuntimes'
 import { getElectronResourcePath } from './utils/AppRuntimePath'
@@ -150,7 +148,6 @@ export default class Application extends EventEmitter {
       stopPluginServices: (moduleId) => this.stopPluginServices(moduleId),
       recoverPluginRuntime: (moduleId) =>
         this.forkManager?.reopenPluginWorker(moduleId) ?? Promise.resolve(),
-      licenseCheck: process.env.FLYENV_PLUGIN_SMOKE === '1' ? async () => true : undefined,
       // OS account keychain (Keychain / DPAPI / system keyring) encryption for
       // the plugin install secret, so copying the secret file to another
       // machine yields undecryptable ciphertext. Falls back to plain storage
@@ -200,8 +197,7 @@ export default class Application extends EventEmitter {
     await this.languageRepository.ready()
     await this.languageCoordinator.initialize(requestedLocale)
     await this.serverDirectoryInitialization
-    // Plugin scans may migrate legacy install records using the saved license.
-    // Publish it before scanning, rather than after invalidating those records.
+    // 扫描插件前发布共享配置，旧安装记录由插件管理器迁移。
     this.serverManager.updateGlobalConfig()
     this.serverManager.setProxy()
     if (isWindows()) this.publishWindowsPrivilege(await this.windowsPrivilege.snapshot())
@@ -255,10 +251,6 @@ export default class Application extends EventEmitter {
     this.initForkManager()
     if (process.env.FLYENV_PLUGIN_SMOKE === '1') {
       void this.runPluginRuntimeSmoke()
-    }
-
-    if (!is.dev()) {
-      this.ipcHandler.handleCommand('app-fork:app', 'App-Start', 'start', app.getVersion())
     }
 
     console.log('Application inited !!!')
@@ -1249,11 +1241,6 @@ export default class Application extends EventEmitter {
       siteSuckerRuntime.peek()?.destroy()
     } catch (e) {
       console.log('SiteSuckerManager.destroy e: ', e)
-    }
-    try {
-      oauthRuntime.peek()?.cancel()
-    } catch (e) {
-      console.log('OAuth.cancel e: ', e)
     }
     try {
       nodePtyRuntime.peek()?.exitAllPty()

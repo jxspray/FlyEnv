@@ -614,7 +614,7 @@ class Php extends Base {
   }
 
   allInstalledVersions(setup: any) {
-    return new ForkPromise((resolve) => {
+    return new ForkPromise<SoftInstalled[]>((resolve) => {
       let versions: SoftInstalled[] = []
       Promise.all([versionLocalFetch(setup?.php?.dirs ?? [], 'php-cgi.exe')])
         .then(async (list) => {

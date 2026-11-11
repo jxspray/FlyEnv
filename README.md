@@ -8,7 +8,7 @@
   <p><strong>FlyEnv is a native local development environment for Windows, macOS, and Linux.</strong><br>
   A modern alternative to XAMPP, MAMP, Laragon, and Laravel Herd — built for more than PHP.</p>
 
-  <p>Manage PHP, Node.js, Python, Java, Go, databases, web servers, local sites, HTTPS, AI coding tools, and MCP from one desktop app.</p>
+  <p>Manage PHP, Node.js, Python, Java, Go, databases, web servers, local sites, HTTPS, local AI tools, and MCP from one desktop app.</p>
 
   <p>
     <a href="https://github.com/xpf0000/FlyEnv/releases"><img src="https://img.shields.io/github/release/xpf0000/FlyEnv.svg" alt="GitHub release"></a>
@@ -33,7 +33,7 @@ FlyEnv brings the local development tools you normally manage separately into on
 - **One workspace for your stack** — runtimes, databases, web servers, queues, search, storage, local sites, and developer tools.
 - **Per-project runtime versions** — switch PHP, Node.js, Python, and other environments by project.
 - **Local domains and HTTPS** — create local sites such as `myapp.test` with certificates and reverse proxies.
-- **AI-ready local development** — manage AI coding CLIs and expose selected local environment capabilities through the built-in FlyEnv MCP Server.
+- **Local AI and MCP** — use Ollama and expose selected local environment capabilities through the built-in FlyEnv MCP Server.
 - **Cross-platform** — Windows, macOS, and Linux.
 
 > If XAMPP, MAMP, Laragon, or Laravel Herd already make sense to you, FlyEnv solves a similar local-development problem — but across a broader stack.
@@ -62,7 +62,7 @@ FlyEnv can manage complete local project stacks, not just one runtime.
 - **ERPNext** — Python, MariaDB, Redis, Nginx
 - **Gitea** — Gitea, MySQL, Nginx, HTTPS
 - **Local databases and services** — PostgreSQL, MongoDB, Redis, RabbitMQ, Elasticsearch, ClickHouse, Neo4j, Qdrant, MinIO/RustFS
-- **AI coding workflows** — Claude Code, Codex, OpenCode, Kimi, GitHub Copilot CLI, and FlyEnv MCP Server
+- **Local AI workflows** — Ollama and FlyEnv MCP Server
 
 **[Browse FlyEnv demos →](https://flyenv.com/demos)**
 
@@ -78,8 +78,8 @@ FlyEnv can manage complete local project stacks, not just one runtime.
 - **Cache & messaging:** Redis, Memcached, RabbitMQ
 - **Search & infrastructure:** Elasticsearch, Meilisearch, Typesense, ZincSearch, Consul, Etcd, R-Nacos, Temporal
 - **Object storage:** MinIO, RustFS
-- **AI & automation:** FlyEnv MCP Server, Claude Code, Codex, OpenCode, Kimi, GitHub Copilot CLI, Ollama, n8n, Hermes Agent, CLIProxyAPI
-- **Other tools:** Cloudflare Tunnel, Mailpit, Cron Jobs, Git, MkCert, DNS Server, FTP Server, Static HTTP Server
+- **AI & automation:** FlyEnv MCP Server, Ollama, n8n
+- **Other tools:** Mailpit, Cron Jobs, Git, MkCert, DNS Server, FTP Server, Static HTTP Server
 
 ### Project workflows
 
@@ -91,11 +91,11 @@ FlyEnv can manage complete local project stacks, not just one runtime.
 - Open configs and logs
 - Group services and projects into reusable startup workflows
 
-### AI coding & MCP
+### Local AI & MCP
 
-- Manage supported AI coding clients from FlyEnv
+- Use local Ollama chat from FlyEnv
 - Register the built-in FlyEnv MCP Server
-- Let supported AI clients inspect selected services, sites, configs, logs, versions, and lifecycle actions
+- Let connected MCP clients inspect selected services, sites, configs, logs, versions, and lifecycle actions
 - Keep AI workflows and local project infrastructure in the same workspace
 
 ![FlyEnv MCP and AI CLI workflow](./flyenv-mcp.jpeg)

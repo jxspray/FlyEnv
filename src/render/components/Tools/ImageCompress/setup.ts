@@ -13,8 +13,6 @@ import { I18nT } from '@lang/index'
 import IPC from '@/util/IPC'
 import { reactive } from 'vue'
 import localForage from 'localforage'
-import { SetupStore } from '@/components/Setup/store'
-import { ElMessageBox } from 'element-plus'
 
 class ImageCompressSetup implements SharpConfig {
   // 基本配置
@@ -272,7 +270,6 @@ class ImageBatchProcess {
   saveDir: string = ''
   backupDir: string = ''
   rewrite: boolean = false
-  trialStartTime: number = 0
   images: Array<BatchImageInfoItem> = []
 
   wordWidths: Record<string, number> = {}
@@ -294,9 +291,6 @@ class ImageBatchProcess {
           if (res && res?.config) {
             Object.assign(setup, res?.config)
           }
-          if (res && res?.trialStartTime) {
-            this.trialStartTime = res.trialStartTime
-          }
         })
         .catch()
         .finally(() => {
@@ -312,8 +306,7 @@ class ImageBatchProcess {
         this.storeKey,
         JSON.parse(
           JSON.stringify({
-            config: setup,
-            trialStartTime: this.trialStartTime
+            config: setup
           })
         )
       )
@@ -432,12 +425,6 @@ class ImageBatchProcess {
   }
 
   doProcess() {
-    const setupStore = SetupStore()
-    if (!setupStore.isActive && this.trialStartTime === 0) {
-      ElMessageBox.alert(I18nT('ai.noLiencesTips')).catch()
-      this.trialStartTime = Math.round(new Date().getTime() / 1000)
-      this.save()
-    }
     if (this.processing) {
       return
     }
@@ -466,7 +453,7 @@ class ImageBatchProcess {
       JSON.parse(JSON.stringify(setup)),
       this.saveDir,
       this.backupDir,
-      this.trialStartTime
+      0
     ).then((key, res) => {
       if (res?.code === 0) {
         IPC.off(key)

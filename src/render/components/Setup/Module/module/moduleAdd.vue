@@ -60,16 +60,8 @@
 
           <div class="plant-title flex items-center justify-between">
             <span>{{ I18nT('setup.moduleExecItem') }}</span>
-            <template v-if="isLock">
-              <el-tooltip placement="left" :content="I18nT('setup.module.licenseTips')">
-                <el-button link @click="toLicense">
-                  <Lock class="w-[17px] h-[17px]" />
-                </el-button>
-              </el-tooltip>
-            </template>
-            <template v-else>
-              <el-button link :icon="Plus" @click.stop="addExecItem(undefined)"></el-button>
-            </template>
+
+            <el-button link :icon="Plus" @click.stop="addExecItem(undefined)"></el-button>
           </div>
           <div class="main p-5 flex flex-col gap-3">
             <template v-if="item.item.length === 0">
@@ -201,19 +193,16 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+  import { onMounted, onUnmounted, reactive, ref, watch } from 'vue'
   import { I18nT } from '@lang/index'
   import { AsyncComponentSetup, AsyncComponentShow } from '@/util/AsyncComponent'
   import { merge } from 'lodash-es'
-  import { Close, Delete, Edit, FolderOpened, Lock, Plus } from '@element-plus/icons-vue'
+  import { Close, Delete, Edit, FolderOpened, Plus } from '@element-plus/icons-vue'
   import { uuid } from '@/util/Index'
   import { ModuleCustomerExecItem, ModuleDefaultIcon } from '@/core/ModuleCustomer'
   import { AppCustomerModule, type CustomerModuleItem } from '@/core/Module'
   import { getExtractedSVG } from 'svg-inline-loader'
   import Base from '@/core/Base'
-  import { SetupStore } from '@/components/Setup/store'
-  import Router from '@/router'
-  import { AppStore } from '@/store/app'
   import { dialog, fs } from '@/util/NodeFn'
 
   const { show, onClosed, onSubmit, closedFn, callback } = AsyncComponentSetup()
@@ -421,23 +410,6 @@
     console.log('item.value: ', item.value)
     callback(JSON.parse(JSON.stringify(item.value)))
     show.value = false
-  }
-
-  const appStore = AppStore()
-  const setupStore = SetupStore()
-
-  const isLock = computed(() => {
-    return !setupStore.isActive && item.value.item.length > 2
-  })
-
-  const toLicense = () => {
-    setupStore.tab = 'licenses'
-    appStore.currentPage = '/setup'
-    Router.push({
-      path: '/setup'
-    })
-      .then()
-      .catch()
   }
 
   onMounted(() => {})

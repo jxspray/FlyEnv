@@ -6,7 +6,6 @@ import HelperStore from '@/store/helper'
 import { nativeTheme } from '@/util/NodeFn'
 import { isEqual } from 'lodash-es'
 import { AppStore } from '@/store/app'
-import { SetupStore } from '@/components/Setup/store'
 import { I18nT } from '@lang/index'
 import { syncRendererPluginModules } from '@/core/AppModules'
 import WindowsPrivilegeController from '@/components/Setup/WindowsElevationMethod/Controller'
@@ -62,10 +61,6 @@ class GlobalIPCOn {
         })
       }
     })
-    IPC.on('APP-License-Need-Update').then(() => {
-      SetupStore().init()
-    })
-
     // 专用权限广播应用版本保护，并把首次选择/取消事件交给唯一控制器。
     IPC.on('APP-Windows-Elevation-Method-Changed').then((key: string, res: any) => {
       if (res && typeof res.revision === 'number') WindowsPrivilegeController.apply(res)

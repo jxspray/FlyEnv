@@ -6,7 +6,6 @@ import {
 } from '@shared/PerformanceDiagnostics'
 import type { AllAppModule } from '@/core/type'
 import localForage from 'localforage'
-import { SetupStore } from '@/components/Setup/store'
 import { MessageError } from '@/util/Element'
 import { I18nT } from '@lang/index'
 import { debug, fs, shell } from '@/util/NodeFn'
@@ -269,12 +268,6 @@ export class Project {
     return this.fetchProjectPromise
   }
   addProject() {
-    const setupStore = SetupStore()
-    const isLock = !setupStore.isActive && this.project.length > 2
-    if (isLock) {
-      MessageError(I18nT('host.licenseTips'))
-      return
-    }
     this.projectEditComponent().then((res) => {
       AsyncComponentShow(res.default, {
         isEdit: false,

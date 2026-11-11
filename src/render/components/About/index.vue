@@ -4,11 +4,16 @@
       <div class="flex items-baseline gap-3">
         <span class="text-2xl">FlyEnv</span>
         <span>Version {{ version }}</span>
-        <el-button type="primary" size="small" @click.stop="checkUpdate">{{
-          I18nT('update.checkForUpdates')
-        }}</el-button>
+        <el-button
+          type="primary"
+          size="small"
+          :disabled="updater.busy"
+          @click.stop="updater.check()"
+          >{{ I18nT('update.checkForUpdates') }}</el-button
+        >
       </div>
     </template>
+    <UpdateSettings />
     <div class="about-panel">
       <div class="app-info">
         <div class="flex justify-center">
@@ -62,14 +67,14 @@
 
 <script setup lang="ts">
   import { ref, onMounted, onUnmounted } from 'vue'
-  import { AppStore } from '@/store/app'
+  import updater from './updateSetup'
+  import UpdateSettings from './UpdateSettings.vue'
   import { AsyncComponentShow } from '@/util/AsyncComponent'
   import { app, shell } from '@/util/NodeFn'
   import IPC from '@/util/IPC'
   import { I18nT } from '@lang/index'
 
   const version = ref('')
-  const appStore = AppStore()
 
   const openUrl = (e: Event, url: string) => {
     e.preventDefault()
@@ -79,10 +84,6 @@
   const toHome = (e: Event) => {
     e.preventDefault()
     shell.openExternal('https://flyenv.com')
-  }
-
-  const checkUpdate = () => {
-    appStore.checkUpdate(false)
   }
 
   const toFeedback = () => {

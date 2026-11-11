@@ -27,7 +27,6 @@
       <ModuleVM v-else-if="store.tab === 'module'" />
       <Plugins v-else-if="store.tab === 'plugins'" />
       <UIConfig v-else-if="store.tab === 'editor'"></UIConfig>
-      <Licenses v-else-if="store.tab === 'licenses'" />
       <About v-else-if="store.tab === 'about'" />
     </div>
   </div>
@@ -39,7 +38,6 @@
   import UIConfig from './UIConfig/index.vue'
   import { I18nT } from '@lang/index'
   import { SetupStore } from '@/components/Setup/store'
-  import Licenses from './Licenses/index.vue'
   import About from './About/index.vue'
   import ModuleVM from './Module/index.vue'
   import Plugins from './Plugins/index.vue'
@@ -59,10 +57,6 @@
       {
         value: 'editor',
         label: 'UI'
-      },
-      {
-        value: 'licenses',
-        label: I18nT('setup.Licenses')
       },
       {
         value: 'about',

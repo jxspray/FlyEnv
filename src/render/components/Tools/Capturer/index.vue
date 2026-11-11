@@ -3,11 +3,9 @@
   import { useEventListener } from '@vueuse/core'
   import { I18nT } from '@lang/index'
   import IPC from '@/util/IPC'
-  import { Delete, FolderOpened, Lock, Plus } from '@element-plus/icons-vue'
+  import { Delete, FolderOpened, Plus } from '@element-plus/icons-vue'
   import { dialog } from '@/util/NodeFn'
   import Setup from '@/components/Tools/Capturer/setup'
-  import { SetupStore } from '@/components/Setup/store'
-  import { ElMessageBox } from 'element-plus'
 
   const name = ref()
   const keyInputAbled = ref(false)
@@ -61,12 +59,6 @@
   )
 
   const doCapturer = async (hideWindow: boolean) => {
-    if (!setupStore.isActive && Setup.trialStartTime === 0) {
-      await ElMessageBox.alert(I18nT('ai.noLiencesTips'))
-      Setup.trialStartTime = Math.round(new Date().getTime() / 1000)
-      Setup.save(false)
-    }
-
     IPC.send('Capturer:doCapturer', hideWindow).then((key: string) => {
       IPC.off(key)
     })
@@ -135,23 +127,6 @@
     return I18nT('common.value.none')
   })
 
-  const setupStore = SetupStore()
-  const isLocked = computed(() => {
-    if (setupStore.isActive) {
-      return false
-    }
-    if (Setup.trialStartTime === 0) {
-      return false
-    }
-
-    const currentTime = Math.round(new Date().getTime() / 1000)
-    if (Setup.trialStartTime + 3 * 24 * 60 * 60 < currentTime) {
-      return true
-    }
-
-    return false
-  })
-
   const cleanShortcut = () => {
     event.value = {} as any
     form.value.key = []
@@ -187,13 +162,6 @@
                 <div
                   class="mb-2 text-3xl flex items-center justify-center gap-2 group-hover:text-blue-500"
                 >
-                  <template v-if="isLocked">
-                    <el-tooltip placement="top" :content="I18nT('fork.trialEnd')">
-                      <Lock
-                        class="w-[30px] h-[30px] text-yellow-500 select-none outline-none"
-                      ></Lock>
-                    </el-tooltip>
-                  </template>
                   <span>{{ showKey }}</span>
                 </div>
                 <span class="lh-1 op-70">
@@ -249,29 +217,14 @@
         <el-button type="primary" @click.stop="doSaveConfig">{{
           I18nT('common.action.save')
         }}</el-button>
-        <template v-if="isLocked">
-          <el-tooltip placement="top" :content="I18nT('fork.trialEnd')">
-            <el-button type="warning" :icon="Lock">{{ I18nT('tools.CapturerDo') }}</el-button>
-          </el-tooltip>
-        </template>
-        <template v-else>
-          <el-button type="primary" @click.stop="doCapturer(false)">{{
-            I18nT('tools.CapturerDo')
-          }}</el-button>
-        </template>
 
-        <template v-if="isLocked">
-          <el-tooltip placement="top" :content="I18nT('fork.trialEnd')">
-            <el-button type="warning" :icon="Lock">{{
-              I18nT('tools.CapturerHideWindowDo')
-            }}</el-button>
-          </el-tooltip>
-        </template>
-        <template v-else>
-          <el-button type="primary" @click.stop="doCapturer(true)">{{
-            I18nT('tools.CapturerHideWindowDo')
-          }}</el-button>
-        </template>
+        <el-button type="primary" @click.stop="doCapturer(false)">{{
+          I18nT('tools.CapturerDo')
+        }}</el-button>
+
+        <el-button type="primary" @click.stop="doCapturer(true)">{{
+          I18nT('tools.CapturerHideWindowDo')
+        }}</el-button>
       </el-scrollbar>
     </div>
   </div>

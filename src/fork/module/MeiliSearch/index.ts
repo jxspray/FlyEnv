@@ -78,7 +78,8 @@ class MeiliSearch extends Base {
 
       const baseDir = join(global.Server.BaseDir!, 'meilisearch')
 
-      const execArgs = ['--config-file-path', iniFile]
+      // 启动参数同时关闭已有配置的分析上报。
+      const execArgs = ['--config-file-path', iniFile, '--no-analytics']
       try {
         const res = await serviceStartSpawn({
           version,

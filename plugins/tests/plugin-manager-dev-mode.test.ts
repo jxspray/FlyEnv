@@ -62,8 +62,7 @@ test('development mode does not require the install secret', async () => {
   try {
     const manager = new PluginManager({
       pluginsRoot: fixture.pluginsRoot,
-      statePath: fixture.statePath,
-      licenseCheck: () => false
+      statePath: fixture.statePath
     })
     await manager.refresh()
     const rendererPlugins = await manager.getRendererPlugins()
@@ -79,8 +78,7 @@ test('installed mode still fails closed when the install secret cannot be decryp
   delete process.env.FLYENV_PLUGIN_PATH
   const manager = new PluginManager({
     pluginsRoot: fixture.pluginsRoot,
-    statePath: fixture.statePath,
-    licenseCheck: () => false
+    statePath: fixture.statePath
   })
   await assert.rejects(manager.refresh(), /install secret/i)
 })

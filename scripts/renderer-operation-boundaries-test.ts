@@ -44,6 +44,28 @@ const actualDirectIpcIndexPages = walk(componentsDir)
 
 assert.deepEqual(actualDirectIpcIndexPages, legacyDirectIpcIndexPages)
 
+const siteImportPage = readFileSync(join(root, 'plugins/phpstudy-import/render/Index.vue'), 'utf8')
+const siteImportSetup = readFileSync(join(root, 'plugins/phpstudy-import/render/setup.ts'), 'utf8')
+const siteImportController = readFileSync(
+  join(root, 'plugins/phpstudy-import/render/Controller.ts'),
+  'utf8'
+)
+assert.doesNotMatch(siteImportPage, /IPC\.send|from ['"]@\/util\/IPC['"]|onUnmounted/)
+assert.match(siteImportSetup, /reactiveBind\(\s*new SiteImportController/)
+assert.match(siteImportSetup, /response\?\.code === 200/)
+assert.match(siteImportController, /if \(this\.running/)
+assert.doesNotMatch(siteImportController, /defineStore|config\.setup/)
+
+const appUpdatePage = readFileSync(join(componentsDir, 'About/UpdateSettings.vue'), 'utf8')
+const appUpdateSetup = readFileSync(join(componentsDir, 'About/updateSetup.ts'), 'utf8')
+assert.doesNotMatch(appUpdatePage, /IPC\.send|from ['"]@\/util\/IPC['"]/)
+assert.match(appUpdateSetup, /reactiveBind\(\s*new UpdateController/)
+assert.match(appUpdateSetup, /response\?\.code === 200/)
+assert.doesNotMatch(
+  readFileSync(join(root, 'src/fork/module/App/index.ts'), 'utf8'),
+  /checkAppVersionUpdate|raw\.githubusercontent/
+)
+
 const phpWindowsPage = readFileSync(join(componentsDir, 'PHP/Extension/Windows/index.vue'), 'utf-8')
 const phpWindowsController = readFileSync(
   join(componentsDir, 'PHP/Extension/Windows/controller.ts'),
@@ -94,106 +116,43 @@ assert.equal(
 )
 assert.doesNotMatch(packageJson.scripts?.build ?? '', /test:renderer-operation-boundaries/)
 
-const aiSessionModules = [
-  {
-    directory: 'ClaudeCode',
-    setup: 'ClaudeCodeSetup',
-    forkKey: 'claudeCode',
-    lastSessionCommand: "`${resolveAiCliTerminalCommand('claude')} --continue`"
-  },
-  {
-    directory: 'Codex',
-    setup: 'CodexSetup',
-    forkKey: 'codex',
-    lastSessionCommand: "`${resolveAiCliTerminalCommand('codex')} resume --last`"
-  },
-  {
-    directory: 'OpenCode',
-    setup: 'OpenCodeSetup',
-    forkKey: 'openCode',
-    lastSessionCommand: "`${resolveAiCliTerminalCommand('opencode')} --continue`"
-  },
-  {
-    directory: 'CopilotCli',
-    setup: 'CopilotCliSetup',
-    forkKey: 'copilotCli',
-    lastSessionCommand: "`${resolveAiCliTerminalCommand('copilot')} --continue`"
-  },
-  {
-    directory: 'Kimi',
-    setup: 'KimiSetup',
-    forkKey: 'kimi',
-    lastSessionCommand: "`${resolveAiCliTerminalCommand('kimi')} --continue`"
-  },
-  {
-    directory: 'Antigravity',
-    setup: 'AntigravitySetup',
-    forkKey: 'antigravity',
-    lastSessionCommand: "`${resolveAiCliTerminalCommand('agy')} --continue`"
-  }
-]
-
-for (const module of aiSessionModules) {
-  const pageSource = readFileSync(join(componentsDir, module.directory, 'Sessions.vue'), 'utf-8')
-  const setupSource = readFileSync(join(componentsDir, module.directory, 'setup.ts'), 'utf-8')
-  const forkSource = readFileSync(
-    join(root, 'src', 'fork', 'module', module.directory, 'index.ts'),
-    'utf-8'
-  )
-  const setupDeleteStart = setupSource.indexOf('deleteSessions(sessionIds: string[])')
-  const setupTerminalStart = setupSource.indexOf('startSessionInTerminal(workDir: string)')
-  const setupDeleteSource = setupSource.slice(setupDeleteStart, setupTerminalStart)
-
-  assert.match(pageSource, /const selectedSessionIds = ref\(new Set<string>\(\)\)/)
-  assert.match(pageSource, /const visibleSessionIds = computed\(/)
-  assert.match(pageSource, /const deleteSelectedSessions = \(\) =>/)
-  assert.match(pageSource, /<template #title>/)
-  assert.match(pageSource, /class="min-w-0 flex-1 truncate"/)
-  assert.match(pageSource, /class="ml-auto flex shrink-0 gap-2"/)
-  assert.match(pageSource, /class="ml-3 !text-lg"/)
-  assert.match(pageSource, new RegExp(`${module.setup}\\.deleteSessions\\(ids\\)`))
-  assert.match(pageSource, /terminal\.svg\?raw/)
-  assert.match(pageSource, /RefreshLeft/)
-  assert.match(pageSource, /class="!ml-0 mr-3"/)
-  assert.match(pageSource, /class="w-\[16px\] h-\[16px\]"/)
-  assert.match(pageSource, /<RefreshLeft class="w-\[16px\] h-\[16px\]"\s*\/>/)
-  assert.doesNotMatch(pageSource, /:icon="RefreshLeft"/)
-  assert.doesNotMatch(pageSource, /<el-icon class="w-\[16px\] h-\[16px\]"/)
-  assert.match(pageSource, /<el-tooltip\s*:content="I18nT\('common\.session\.newSession'\)"/)
-  assert.match(pageSource, /<el-tooltip\s*:content="I18nT\('common\.session\.lastSession'\)"/)
-  assert.match(pageSource, /I18nT\('common\.session\.newSession'\)/)
-  assert.match(pageSource, /I18nT\('common\.session\.lastSession'\)/)
-  assert.match(pageSource, /@click\.stop="startSessionInTerminal\(group\.workDir\)"/)
-  assert.match(pageSource, /@click\.stop="resumeLastSessionInTerminal\(group\.workDir\)"/)
-  assert.doesNotMatch(pageSource, /group\.sessions\[0\]/)
-  assert.match(pageSource, new RegExp(`${module.setup}\\.startSessionInTerminal\\(workDir\\)`))
-  assert.doesNotMatch(pageSource, /from\s+['"]@\/util\/IPC['"]/)
-
-  assert.match(setupSource, /deletingSessions = false/)
-  assert.match(setupSource, /openingSessionDirs = new Set<string>\(\)/)
-  assert.match(setupSource, /deleteSessions\(sessionIds: string\[\]\): Promise<string\[\]>/)
-  assert.match(
-    setupSource,
-    new RegExp(`IPC\\.send\\('app-fork:${module.forkKey}', 'deleteSessions', ids\\)`)
-  )
-  assert.match(setupSource, /startSessionInTerminal\(workDir: string\): Promise<boolean>/)
-  assert.match(
-    setupSource,
-    new RegExp(`IPC\\.send\\('app-fork:${module.forkKey}', 'runInTerminal', workDir\\)`)
-  )
-  assert.match(setupSource, /isStartingSessionInTerminal\(workDir: string\)/)
-  assert.match(setupSource, /resumeLastSessionInTerminal\(workDir: string\): Promise<boolean>/)
-  assert.match(
-    setupSource,
-    new RegExp(
-      `IPC\\.send\\('app-fork:${module.forkKey}', 'resumeLastSessionInTerminal', workDir\\)`
-    )
-  )
-  assert.match(forkSource, /resumeLastSessionInTerminal\(workDir: string\)/)
-  assert.ok(forkSource.includes(module.lastSessionCommand))
-  assert.match(setupDeleteSource, /this\.refreshSessions\(\)/)
-  assert.equal((setupDeleteSource.match(/this\.refreshSessions\(\)/g) ?? []).length, 1)
+// 删除远程账号模块后，导航入口和会话接口均应保持不可达。
+for (const directory of [
+  'OpenClaw',
+  'CliProxyAPI',
+  'CloudflareTunnel',
+  'Hermes',
+  'ClaudeCode',
+  'Codex',
+  'Kimi',
+  'OpenCode',
+  'Antigravity',
+  'CopilotCli'
+]) {
+  assert.equal(existsSync(join(componentsDir, directory, 'Module.ts')), false)
 }
+for (const directory of ['ClaudeCode', 'Codex', 'Kimi', 'OpenCode', 'Antigravity', 'CopilotCli']) {
+  const source = readFileSync(join(root, 'src/fork/module', directory, 'index.ts'), 'utf-8')
+  assert.match(source, /addMcp\(/)
+  assert.doesNotMatch(source, /listSessions\(|runInTerminal\(|resumeLastSessionInTerminal\(/)
+}
+const applicationSource = readFileSync(join(root, 'src/main/Application.ts'), 'utf-8')
+const appModuleSource = readFileSync(join(root, 'src/fork/module/App/index.ts'), 'utf-8')
+assert.doesNotMatch(applicationSource, /App-Start/)
+assert.doesNotMatch(appModuleSource, /api\/app\/start/)
+assert.match(appModuleSource, /api\/app\/feedback_app/)
+assert.match(
+  readFileSync(join(componentsDir, 'About/index.vue'), 'utf-8'),
+  /@click\.stop="toFeedback"/
+)
+assert.match(
+  readFileSync(join(root, 'src/fork/module/Qdrant/index.ts'), 'utf-8'),
+  /QDRANT__TELEMETRY_DISABLED: 'true'/
+)
+assert.match(
+  readFileSync(join(root, 'src/fork/module/MeiliSearch/index.ts'), 'utf-8'),
+  /'--no-analytics'/
+)
 
 assert.equal(englishCommon.session.newSession, 'New Session')
 assert.equal(englishCommon.session.lastSession, 'Last Session')

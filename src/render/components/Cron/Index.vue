@@ -10,18 +10,10 @@
       <template v-if="tab === 0">
         <div class="cron-toolbar">
           <div class="left">
-            <template v-if="isLock">
-              <el-tooltip placement="right" :content="I18nT('cron.licenseTips')">
-                <el-button :icon="Lock" type="warning" @click="toLicense">
-                  {{ I18nT('cron.add') }}
-                </el-button>
-              </el-tooltip>
-            </template>
-            <template v-else>
-              <el-button :icon="Plus" type="primary" @click="toAdd">
-                {{ I18nT('cron.add') }}
-              </el-button>
-            </template>
+            <el-button :icon="Plus" type="primary" @click="toAdd">
+              {{ I18nT('cron.add') }}
+            </el-button>
+
             <el-button :icon="Refresh" @click="refreshList">
               {{ I18nT('common.action.refresh') }}
             </el-button>
@@ -74,12 +66,10 @@
 <script setup lang="ts">
   import { computed, ref, watch } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
-  import { Plus, Refresh, Lock } from '@element-plus/icons-vue'
+  import { Plus, Refresh } from '@element-plus/icons-vue'
   import { I18nT } from '@lang/index'
   import { AppStore } from '@/store/app'
   import { AppModuleSetup } from '@/core/Module'
-  import { SetupStore } from '@/components/Setup/store'
-  import Router from '@/router'
   import ListTable from './ListTable.vue'
   import SystemTaskTable from './SystemTaskTable.vue'
   import DialogAdd from './DialogAdd.vue'
@@ -89,7 +79,6 @@
   const route = useRoute()
   const router = useRouter()
   const appStore = AppStore()
-  const setupStore = SetupStore()
   const cronStore = useCronStore()
   const { tab } = AppModuleSetup('cron')
   const tabs = [I18nT('cron.title'), I18nT('cron.systemTasks')]
@@ -104,10 +93,6 @@
     enabled: 0,
     disabled: 0,
     recent: 0
-  })
-
-  const isLock = computed(() => {
-    return !setupStore.isActive && stats.value.total >= 1
   })
 
   const hostOptions = computed(() => {
@@ -159,16 +144,6 @@
   const toAdd = () => {
     editingItem.value = null
     showDialog.value = true
-  }
-
-  const toLicense = () => {
-    setupStore.tab = 'licenses'
-    appStore.currentPage = '/setup'
-    Router.push({
-      path: '/setup'
-    })
-      .then()
-      .catch()
   }
 
   const onEdit = (item: CronJob) => {

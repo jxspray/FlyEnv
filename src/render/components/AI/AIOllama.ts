@@ -56,7 +56,7 @@ export class AIOllama extends AIBase {
         )
       }
       this.currentChatKey = uuid()
-      IPC.send('app-fork:ollama', 'chat', data, AISetup.trialStartTime, this.currentChatKey).then(
+      IPC.send('app-fork:ollama', 'chat', data, 0, this.currentChatKey).then(
         (key: string, res: any) => {
           // console.log('ollama chat res: ', res)
           if (res?.code === 0) {

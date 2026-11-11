@@ -1,0 +1,23 @@
+{
+  "apiVersion": 1,
+  "id": "phpstudy-import",
+  "name": "phpStudy 站点导入",
+  "version": "0.1.1",
+  "description": {
+    "zh": "扫描 phpStudy 站点，核对 PHP 版本后按进度批量导入 FlyEnv。",
+    "en": "Scan phpStudy sites, review PHP versions and import sites into FlyEnv with progress."
+  },
+  "module": {
+    "typeFlag": "phpstudy-import",
+    "moduleType": "site",
+    "label": "phpStudy 导入",
+    "asideIndex": 0.5,
+    "isService": false,
+    "isTray": false,
+    "platform": ["Windows"]
+  },
+  "entry": {
+    "render": "render/Module.ts",
+    "fork": "fork/index.ts"
+  }
+}

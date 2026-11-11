@@ -55,8 +55,7 @@ async function fixture(version = 1) {
     manager: () =>
       new PluginManager({
         pluginsRoot: path.join(dir, 'plugins'),
-        statePath,
-        licenseCheck: async () => global.Server?.Licenses === 'saved-license'
+        statePath
       })
   }
 }
@@ -115,7 +114,7 @@ async function loadApplication(dir: string, filename = 'Application.ts') {
   return (await import(pathToFileURL(output).href)).default
 }
 
-test('cold startup migrates installed v1 plugins using the persisted license before the scan', async () => {
+test('cold startup migrates installed v1 plugins without a license', async () => {
   const f = await fixture()
   const previousServer = global.Server
   try {
@@ -130,9 +129,7 @@ test('cold startup migrates installed v1 plugins using the persisted license bef
       languageCoordinator: { initialize: async () => {} },
       serverDirectoryInitialization: Promise.resolve(true),
       serverManager: {
-        updateGlobalConfig: () => {
-          global.Server.Licenses = 'saved-license'
-        },
+        updateGlobalConfig: () => {},
         setProxy: () => {}
       },
       pluginManager: {
@@ -163,7 +160,7 @@ test('cold startup migrates installed v1 plugins using the persisted license bef
   }
 })
 
-test('v2 plugins survive a new manager with no fresh license and invalid siblings remain isolated', async () => {
+test('v2 plugins survive a new manager and invalid siblings remain isolated', async () => {
   const f = await fixture(2)
   const previousServer = global.Server
   try {
@@ -509,7 +506,6 @@ async function replacementInstaller(
   return new PluginManager({
     pluginsRoot: path.join(f.dir, 'plugins'),
     statePath: f.statePath,
-    licenseCheck: async () => true,
     fetchImpl: async () => new Response(bytes),
     ...options
   })

@@ -39,25 +39,19 @@
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <span>{{ I18nT('tools.ImageCompress.batchProcessing.imageFiles') }}</span>
-            <template v-if="isLocked">
-              <el-tooltip placement="top" :content="I18nT('fork.trialEnd')">
-                <Lock class="w-[18px] h-[18px] text-yellow-500 select-none outline-none"></Lock>
-              </el-tooltip>
+
+            <template v-if="ImageBatch.processing">
+              <el-button :loading="true" link></el-button>
             </template>
             <template v-else>
-              <template v-if="ImageBatch.processing">
-                <el-button :loading="true" link></el-button>
-              </template>
-              <template v-else>
-                <el-button
-                  link
-                  type="success"
-                  :disabled="!ImageBatch.images.length"
-                  @click.stop="ImageBatch.doProcess()"
-                >
-                  <yb-icon class="w-[18px] h-[18px]" :svg="import('@/svg/play.svg?raw')" />
-                </el-button>
-              </template>
+              <el-button
+                link
+                type="success"
+                :disabled="!ImageBatch.images.length"
+                @click.stop="ImageBatch.doProcess()"
+              >
+                <yb-icon class="w-[18px] h-[18px]" :svg="import('@/svg/play.svg?raw')" />
+              </el-button>
             </template>
           </div>
           <div class="flex items-center">
@@ -161,13 +155,12 @@
 <script setup lang="ts">
   import { ref, computed, onMounted } from 'vue'
   import { ImageBatch } from './setup'
-  import { Delete, FolderOpened, Lock, Plus, Picture, Folder } from '@element-plus/icons-vue'
+  import { Delete, FolderOpened, Plus, Picture, Folder } from '@element-plus/icons-vue'
   import BatchImageTablePathCell from '@/components/Tools/ImageCompress/BatchImageTablePathCell.vue'
-  import { SetupStore } from '@/components/Setup/store'
+
   import { I18nT } from '@lang/index'
   import { initFileDroper } from '@/util/File'
 
-  const setupStore = SetupStore()
   const choosed = ref([])
   const card = ref()
   const onDrag = ref(false)
@@ -186,22 +179,6 @@
 
   const isMacOS = computed(() => {
     return window.Server.isMacOS
-  })
-
-  const isLocked = computed(() => {
-    if (setupStore.isActive) {
-      return false
-    }
-    if (ImageBatch.trialStartTime === 0) {
-      return false
-    }
-
-    const currentTime = Math.round(new Date().getTime() / 1000)
-    if (ImageBatch.trialStartTime + 3 * 24 * 60 * 60 < currentTime) {
-      return true
-    }
-
-    return false
   })
 
   const handleSelectionChange = (val: any) => {

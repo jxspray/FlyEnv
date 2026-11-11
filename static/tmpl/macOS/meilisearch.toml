@@ -20,7 +20,7 @@ http_addr = "localhost:7700"
 # Meilisearch automatically collects data from all instances that do not opt out using this flag.
 # All gathered data is used solely for the purpose of improving Meilisearch, and can be deleted at any time.
 # https://www.meilisearch.com/docs/learn/configuration/instance_options#disable-analytics
-# no_analytics = true
+no_analytics = true
 
 # Sets the maximum size of accepted payloads.
 # https://www.meilisearch.com/docs/learn/configuration/instance_options#payload-limit-size

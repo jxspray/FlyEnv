@@ -7,7 +7,7 @@ import { MessageError } from '@/util/Element'
 import type { AllAppModule } from '@/core/type'
 import { HostStore } from '@/components/Host/store'
 import type { AppServiceAliasItem } from '@shared/app'
-import { shell, app, dialog } from '@/util/NodeFn'
+import { shell, app } from '@/util/NodeFn'
 import {
   DEFAULT_WINDOWS_ELEVATION_METHOD,
   type WindowsElevationMethod
@@ -116,8 +116,6 @@ type StateBase = SetupBase & {
   autoStartService?: boolean
   autoHide?: boolean
   autoLaunch?: boolean
-  license?: string
-  user_uuid?: string
   trayMenuBarStyle?: 'classic' | 'modern'
   windowsElevationMethod?: WindowsElevationMethod
   // 沿用已有应用域设置；没有此标记时 UI 展示“未选择”，不展示旧默认 helper 为已同意。
@@ -319,48 +317,12 @@ export const AppStore = defineStore('app', {
       }
     },
     checkUpdate(isAutoCheck?: boolean) {
-      IPC.send('app-fork:app', 'checkAppVersionUpdate').then((key: string, res: any) => {
-        IPC.off(key)
-        console.log('checkUpdate res: ', res)
-        if (res?.data?.app) {
-          this.appVersion = reactive(res.data)
-          if (!isAutoCheck || (isAutoCheck && this.appVersion.check > 0)) {
-            if (this.appVersion.check > 0) {
-              dialog
-                .showMessageBox({
-                  type: 'info',
-                  title: I18nT('update.checkForUpdates'),
-                  message: I18nT('update.update-available-message'),
-                  buttons: [
-                    I18nT('base.cancel'),
-                    I18nT('update.view-update-log'),
-                    I18nT('update.download-new-version')
-                  ],
-                  cancelId: 0,
-                  defaultId: 1
-                })
-                .then(({ response }) => {
-                  if (response === 1) {
-                    shell.openExternal('https://github.com/xpf0000/FlyEnv/releases')
-                  } else if (response === 2) {
-                    shell.openExternal(this.appVersion.url)
-                  }
-                })
-            } else {
-              dialog
-                .showMessageBox({
-                  title: I18nT('update.checkForUpdates'),
-                  message: I18nT('update.update-not-available-message')
-                })
-                .catch()
-            }
-          }
-        } else {
-          if (!isAutoCheck) {
-            MessageError(res?.msg ?? I18nT('base.fail'))
-          }
-        }
-      })
+      return import('@/components/About/updateSetup')
+        .then(({ default: updater }) => updater.check(isAutoCheck === true))
+        .catch((error) => {
+          if (!isAutoCheck) MessageError(String(error))
+          return false
+        })
     }
   }
 })

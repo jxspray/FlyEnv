@@ -10,6 +10,7 @@ const config: Configuration = {
   artifactName: 'FlyEnv-Local-Setup-${version}.${ext}',
   win: {
     ...productionConfig.win,
+    artifactName: 'FlyEnv-Local-Setup-${version}.${ext}',
     signExecutable: false,
     target: {
       target: 'nsis',

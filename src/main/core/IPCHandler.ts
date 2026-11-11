@@ -49,10 +49,11 @@ import {
   httpServerRuntime,
   mcpAuditRuntime,
   nodePtyRuntime,
-  oauthRuntime,
   siteSuckerRuntime,
   syncCapturerConfig
 } from './lazy/OptionalRuntimes'
+import { appUpdateRuntime } from './lazy/OptionalRuntimes'
+import type { AppUpdateState } from '@shared/AppUpdate'
 
 export interface IPCHandlerDependencies {
   configManager: ConfigManager
@@ -248,7 +249,7 @@ export default class IPCHandler extends EventEmitter {
       }
       try {
         const request = withWindowsPrivilegeInteraction(
-          !command.startsWith('app-fork-background:') && !(module === 'app' && action === 'start'),
+          !command.startsWith('app-fork-background:'),
           () => forkManager.send(module, ...dispatchArgs)
         )
         const isCurrentRequest = captureServiceLifecycleValidity()
@@ -390,19 +391,6 @@ export default class IPCHandler extends EventEmitter {
     }
     this.deps.windowManager.sendCommandTo(win, command, key, info)
 
-    // 处理许可证码
-    if (info?.data && 'APP-Licenses-Code' in info.data) {
-      const code: string = info.data['APP-Licenses-Code'] ?? ''
-      this.deps.configManager?.setConfig('setup.license', code)
-      global.Server.Licenses = code
-      this.deps.windowManager.sendCommandTo(
-        this.deps.mainWindow!,
-        'APP-License-Need-Update',
-        'APP-License-Need-Update',
-        true
-      )
-    }
-
     // 处理日志
     if (info?.msg?.['APP-On-Log']) {
       this.deps.windowManager.sendCommandTo(
@@ -470,6 +458,22 @@ export default class IPCHandler extends EventEmitter {
    */
   private handleRegularCommand(command: string, key: string, ...args: any[]) {
     switch (command) {
+      case 'application:update':
+        void appUpdateRuntime
+          .load()
+          .then(async (runtime) => {
+            const onState = (data: AppUpdateState) =>
+              this.sendToMainWindow(command, key, { code: 200, data })
+            runtime.on('state', onState)
+            try {
+              const data = await runtime.run(args[0], args[1])
+              this.sendToMainWindow(command, key, { code: 0, data })
+            } finally {
+              runtime.off('state', onState)
+            }
+          })
+          .catch((error) => this.sendRuntimeError(command, key, error))
+        break
       // 选择/快照/取消均由 main 协调；renderer 不直接保存权限配置或运行系统命令。
       case 'application:windows-privilege-snapshot':
         this.deps.windowsPrivilege
@@ -698,23 +702,6 @@ export default class IPCHandler extends EventEmitter {
         break
       case 'app-sitesucker-setup-save':
         this.handleSiteSuckerSetupSave(command, key, args)
-        break
-
-      // OAuth
-      case 'GitHub-OAuth-Start':
-        this.handleOAuthStart(command, key)
-        break
-      case 'GitHub-OAuth-Cancel':
-        this.handleOAuthCancel(command, key)
-        break
-      case 'GitHub-OAuth-License-Fetch':
-        this.handleOAuthLicenseFetch(command, key)
-        break
-      case 'GitHub-OAuth-License-Del-Bind':
-        this.handleOAuthLicenseDelBind(command, key, args)
-        break
-      case 'GitHub-OAuth-License-Add-Bind':
-        this.handleOAuthLicenseAddBind(command, key, args)
         break
 
       // MCP Server
@@ -1200,37 +1187,6 @@ export default class IPCHandler extends EventEmitter {
     this.deps.configManager.setConfig('tools.siteSucker', args[0])
     this.sendToMainWindow(command, key, true)
     siteSuckerRuntime.peek()?.updateConfig(args[0])
-  }
-
-  // ===== OAuth =====
-
-  private handleOAuthStart(command: string, key: string) {
-    oauthRuntime
-      .load()
-      .then((oauth) => oauth.startOAuth())
-      .then((res) => {
-        this.sendToMainWindow(command, key, { code: 0, data: res })
-      })
-      .catch((err) => {
-        this.sendToMainWindow(command, key, { code: 1, msg: `${err}` })
-      })
-  }
-
-  private handleOAuthCancel(command: string, key: string) {
-    oauthRuntime.peek()?.cancel()
-    this.sendToMainWindow(command, key, { code: 0, data: true })
-  }
-
-  private handleOAuthLicenseFetch(command: string, key: string) {
-    this.dispatchForkCommand(command, key, 'app', ['githubLicenseFetch'])
-  }
-
-  private handleOAuthLicenseDelBind(command: string, key: string, args: any[]) {
-    this.dispatchForkCommand(command, key, 'app', ['githubLicenseDelete', args[0], args[1]])
-  }
-
-  private handleOAuthLicenseAddBind(command: string, key: string, args: any[]) {
-    this.dispatchForkCommand(command, key, 'app', ['githubLicenseAdd', args[0], args[1]])
   }
 
   // ===== MCP Server =====

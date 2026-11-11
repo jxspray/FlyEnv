@@ -4,7 +4,6 @@ import AfterSign from '../build/afterSign'
 const conf: Configuration = {
   productName: 'FlyEnv',
   executableName: 'FlyEnv',
-  buildVersion: '4.20.2',
   electronVersion: '39.8.10',
   appId: 'phpstudy.xpfme.com',
   asar: true,
@@ -56,7 +55,8 @@ const conf: Configuration = {
     artifactName: 'FlyEnv-Portable-${version}.${ext}',
     unpackDirName: 'FlyEnv-Portable-${version}'
   },
-  publish: [],
+  // 回环占位源只用于生成更新元数据，运行时由用户保存的更新目录覆盖。
+  publish: [{ provider: 'generic', url: 'http://127.0.0.1/updates/' }],
   // Move the helper into its final path before the workflow collects unsigned PE files.
   afterSign: AfterSign
 }

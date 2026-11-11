@@ -82,10 +82,6 @@ export class StartupGroupStore {
     return config
   }
 
-  isCreationLocked(isLicenseActive: boolean) {
-    return !isLicenseActive && this.groups.length >= 1
-  }
-
   async add(draft: StartupGroupDraft) {
     await this.init()
     const group = this.hydrate({

@@ -5,16 +5,8 @@
         <h2 class="text-xl font-semibold">{{ I18nT('common.startupGroup.title') }}</h2>
         <p class="text-sm text-zinc-500">{{ I18nT('common.startupGroup.description') }}</p>
       </div>
-      <el-tooltip
-        v-if="isAddLocked"
-        placement="left"
-        :content="I18nT('common.startupGroup.licenseTips')"
-      >
-        <el-button :icon="Lock" type="warning" @click="toLicense">
-          {{ I18nT('common.startupGroup.add') }}
-        </el-button>
-      </el-tooltip>
-      <el-button v-else type="primary" @click="openEditor()">
+
+      <el-button type="primary" @click="openEditor()">
         {{ I18nT('common.startupGroup.add') }}
       </el-button>
     </div>
@@ -58,15 +50,12 @@
 </template>
 
 <script lang="ts" setup>
-  import { Lock } from '@element-plus/icons-vue'
+  import {} from '@element-plus/icons-vue'
   import { ElMessageBox } from 'element-plus'
   import { computed, onMounted, ref, watch } from 'vue'
   import draggable from 'vuedraggable'
 
   import { I18nT } from '@lang/index'
-  import { SetupStore } from '@/components/Setup/store'
-  import Router from '@/router'
-  import { AppStore } from '@/store/app'
   import { MessageError, MessageSuccess } from '@/util/Element'
   import GroupCard from './GroupCard.vue'
   import GroupEditor from './GroupEditor.vue'
@@ -79,26 +68,13 @@
   const groups = computed(() => store.groups)
   const orderedGroups = ref<StartupGroup[]>([])
   const config = computed(() => store.config)
-  const appStore = AppStore()
-  const setupStore = SetupStore()
-  const isAddLocked = computed(() => store.isCreationLocked(setupStore.isActive))
   const editorVisible = ref(false)
   const editingGroup = ref<StartupGroup>()
   const reordering = ref(false)
   const itemLabel = (item: StartupGroupItem) =>
     StartupGroupManager.getMemberDisplayTitle(item, I18nT('common.startupGroup.noRemark'))
 
-  const toLicense = () => {
-    setupStore.tab = 'licenses'
-    appStore.currentPage = '/setup'
-    Router.push({ path: '/setup' }).then().catch()
-  }
-
   const openEditor = (group?: StartupGroup) => {
-    if (!group && isAddLocked.value) {
-      toLicense()
-      return
-    }
     editingGroup.value = group
     editorVisible.value = true
   }

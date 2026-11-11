@@ -31,7 +31,9 @@ export function qdrantWebUiDir(bin: string): string {
 
 export function qdrantWebUiEnvironment(bin: string): Record<string, string> {
   return {
-    QDRANT__SERVICE__STATIC_CONTENT_DIR: qdrantWebUiDir(bin)
+    QDRANT__SERVICE__STATIC_CONTENT_DIR: qdrantWebUiDir(bin),
+    // 同时覆盖已存在配置中的遥测设置。
+    QDRANT__TELEMETRY_DISABLED: 'true'
   }
 }
 

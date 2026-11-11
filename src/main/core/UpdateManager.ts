@@ -1,122 +1,143 @@
-import { EventEmitter } from 'events'
-import { dialog } from 'electron'
-import is from 'electron-is'
-import _updater from 'electron-updater'
-import logger from './Logger'
-import { I18nT } from '@lang/runtime'
+import { EventEmitter } from 'node:events'
 import type { AppUpdater } from 'electron-updater/out/AppUpdater'
-import { getAppResourcePath } from '../utils/AppRuntimePath'
+import { normalizeUpdateSource, type AppUpdateAction, type AppUpdateState } from '@shared/AppUpdate'
 
-const { autoUpdater } = _updater
+export type UpdateEngine = Pick<
+  AppUpdater,
+  | 'on'
+  | 'setFeedURL'
+  | 'checkForUpdates'
+  | 'downloadUpdate'
+  | 'quitAndInstall'
+  | 'autoDownload'
+  | 'autoInstallOnAppQuit'
+  | 'allowDowngrade'
+  | 'requestHeaders'
+>
 
-if (is.dev()) {
-  autoUpdater.updateConfigPath = getAppResourcePath('app-update.yml')
-}
-
+/** 主进程拥有更新下载及安装，renderer 仅提交命令和绑定状态。 */
 export default class UpdateManager extends EventEmitter {
-  updater: AppUpdater
-  autoCheckData: {
-    checkEnable: boolean
-    userCheck: boolean
-  }
-  constructor(autoCheck = true) {
+  private busy = false
+  private state: AppUpdateState
+
+  constructor(
+    private engine: UpdateEngine,
+    currentVersion: string,
+    private beforeInstall: () => Promise<void>
+  ) {
     super()
-    this.updater = autoUpdater
-    this.updater.autoDownload = false
-    this.updater.logger = logger
-    this.autoCheckData = {
-      checkEnable: autoCheck,
-      userCheck: false
+    this.state = {
+      phase: 'idle',
+      currentVersion,
+      version: '',
+      source: '',
+      percent: 0,
+      transferred: 0,
+      total: 0,
+      releaseNotes: '',
+      error: ''
     }
-    this.init()
-  }
-
-  init() {
-    this.updater.on('checking-for-update', this.checkingForUpdate.bind(this))
-    this.updater.on('update-available', this.updateAvailable.bind(this))
-    this.updater.on('update-not-available', this.updateNotAvailable.bind(this))
-    this.updater.on('download-progress', this.updateDownloadProgress.bind(this))
-    this.updater.on('update-downloaded', this.updateDownloaded.bind(this))
-    this.updater.on('error', this.updateError.bind(this))
-
-    if (this.autoCheckData.checkEnable) {
-      this.autoCheckData.userCheck = false
-      this.updater.checkForUpdates().then()
-    }
-  }
-
-  check() {
-    this.autoCheckData.userCheck = true
-    this.updater.checkForUpdates().then()
-  }
-
-  checkingForUpdate() {
-    this.emit('checking')
-  }
-
-  updateAvailable(info: any) {
-    this.emit('update-available', info)
-    dialog
-      .showMessageBox({
-        type: 'info',
-        title: I18nT('update.checkForUpdates'),
-        message: I18nT('update.update-available-message'),
-        buttons: [I18nT('common.value.yes'), I18nT('common.value.no')],
-        cancelId: 1
+    engine.autoDownload = false
+    engine.autoInstallOnAppQuit = false
+    engine.allowDowngrade = false
+    // 覆盖库默认的分阶段更新用户标识，更新请求仅获取版本及安装文件。
+    engine.requestHeaders = { 'x-user-staging-id': '' }
+    engine.on('update-available', (info) =>
+      this.patch({
+        phase: 'available',
+        version: info.version,
+        releaseNotes: this.notes(info.releaseNotes)
       })
-      .then(({ response }) => {
-        if (response === 0) {
-          this.updater.downloadUpdate().then()
-        }
+    )
+    engine.on('update-not-available', (info) =>
+      this.patch({ phase: 'current', version: info.version })
+    )
+    engine.on('download-progress', (info) =>
+      this.patch({
+        phase: 'downloading',
+        percent: Math.min(100, Math.max(0, info.percent)),
+        transferred: info.transferred,
+        total: info.total
       })
+    )
+    engine.on('update-downloaded', (info) =>
+      this.patch({ phase: 'downloaded', percent: 100, version: info.version })
+    )
+    engine.on('error', (error) =>
+      this.patch({ phase: 'error', error: error instanceof Error ? error.message : String(error) })
+    )
   }
 
-  updateNotAvailable(info: any) {
-    this.emit('update-not-available', info)
-    if (this.autoCheckData.userCheck) {
-      dialog
-        .showMessageBox({
-          title: I18nT('update.checkForUpdates'),
-          message: I18nT('update.update-not-available-message')
+  snapshot(): AppUpdateState {
+    return { ...this.state }
+  }
+
+  private patch(values: Partial<AppUpdateState>) {
+    Object.assign(this.state, values)
+    this.emit('state', this.snapshot())
+  }
+
+  private notes(value: unknown): string {
+    if (typeof value === 'string') return value
+    if (Array.isArray(value))
+      return value
+        .map((item) => (typeof item?.note === 'string' ? item.note : ''))
+        .filter(Boolean)
+        .join('\n')
+    return ''
+  }
+
+  async run(action: AppUpdateAction, source = ''): Promise<AppUpdateState> {
+    if (action === 'snapshot') return this.snapshot()
+    if (this.busy) throw new Error('更新任务正在进行，请等待当前操作完成')
+    this.busy = true
+    try {
+      if (action === 'reset') {
+        this.patch({
+          phase: 'idle',
+          version: '',
+          source: '',
+          percent: 0,
+          transferred: 0,
+          total: 0,
+          error: '',
+          releaseNotes: ''
         })
-        .then()
-    }
-  }
-
-  /**
-   * autoUpdater:download-progress
-   * @param {Object} event
-   * progress,
-   * bytesPerSecond,
-   * percent,
-   * total,
-   * transferred
-   */
-  updateDownloadProgress(event: any) {
-    this.emit('download-progress', event)
-  }
-
-  updateDownloaded(info: any) {
-    this.emit('update-downloaded', info)
-    this.updater?.logger?.info(`Update Downloaded: ${info}`)
-    dialog
-      .showMessageBox({
-        title: I18nT('update.checkForUpdates'),
-        message: I18nT('update.update-downloaded-message')
-      })
-      .then(() => {
-        this.emit('will-updated')
-        setImmediate(() => {
-          this.updater.quitAndInstall()
+      } else if (action === 'check') {
+        const url = normalizeUpdateSource(source)
+        if (!url) throw new Error('请先配置更新目录地址')
+        this.patch({
+          phase: 'checking',
+          source: url,
+          version: '',
+          percent: 0,
+          error: '',
+          releaseNotes: ''
         })
+        this.engine.setFeedURL({ provider: 'generic', url, useMultipleRangeRequest: false })
+        const result = await this.engine.checkForUpdates()
+        if (!result) throw new Error('当前运行方式不支持自动更新，请使用安装版进行检查')
+      } else if (action === 'download') {
+        if (this.state.phase !== 'available') throw new Error('请先检查并选择可用的新版本')
+        this.patch({ phase: 'downloading', percent: 0, error: '' })
+        await this.engine.downloadUpdate()
+        if (this.snapshot().phase !== 'downloaded') throw new Error('安装包下载未完成')
+      } else if (action === 'install') {
+        if (this.state.phase !== 'downloaded') throw new Error('请先完整下载并校验更新包')
+        this.patch({ phase: 'installing', error: '' })
+        await this.beforeInstall()
+        this.engine.quitAndInstall(false, true)
+        if (this.snapshot().phase === 'error') throw new Error(this.state.error)
+      } else throw new Error('未知的应用更新操作')
+      return this.snapshot()
+    } catch (error) {
+      this.patch({
+        phase: action === 'install' && this.state.phase === 'installing' ? 'downloaded' : 'error',
+        error: error instanceof Error ? error.message : String(error)
       })
-  }
-
-  updateError(event: any, error: any) {
-    this.emit('update-error', error)
-    if (this.autoCheckData.userCheck) {
-      const msg = I18nT('update.update-error-message')
-      dialog.showErrorBox(I18nT('update.checkForUpdates'), msg)
+      throw error
+    } finally {
+      this.busy = false
     }
   }
 }

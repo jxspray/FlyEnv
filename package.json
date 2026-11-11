@@ -1,6 +1,6 @@
 {
   "name": "FlyEnv",
-  "version": "4.20.2",
+  "version": "4.20.4",
   "description": "All-In-One Full-Stack Environment Management Tool",
   "author": {
     "name": "Pengfei Xu",
@@ -11,6 +11,11 @@
     "node": ">=18.0.0"
   },
   "scripts": {
+    "build:phpstudy-import": "tsx plugins/phpstudy-import/build.ts",
+    "test:phpstudy-import-plugin": "tsx plugins/phpstudy-import/tests/package.test.ts",
+    "update:manifest": "tsx scripts/write-update-manifest.ts",
+    "test:app-update": "tsx scripts/app-update-test.ts",
+    "test:site-import": "tsx scripts/site-import-test.ts",
     "clean:dev": "npx rimraf dist",
     "clean": "npx rimraf node_modules/node-pty/build",
     "fix-flyenv-helper": "sudo xattr -dr \"com.apple.quarantine\" ./build/bin/arm/flyenv-helper && sudo xattr -dr \"com.apple.quarantine\" ./build/bin/x86/flyenv-helper",
@@ -49,8 +54,7 @@
     "plugin:release": "tsx scripts/plugin-release.ts",
     "plugin:debug": "tsx scripts/plugin-runner.ts debug",
     "plugin:test": "tsx scripts/plugin-test.ts",
-    "plugin:runtime-smoke": "tsx scripts/plugin-runtime-smoke.ts",
-    "test:hermes-providers": "tsx scripts/hermes-providers-test.ts"
+    "plugin:runtime-smoke": "tsx scripts/plugin-runtime-smoke.ts"
   },
   "type": "module",
   "main": "./dist/electron/main.mjs",

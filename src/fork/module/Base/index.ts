@@ -525,7 +525,6 @@ export class Base {
       rabbitmq: 'rabbit',
       elasticsearch: 'org.elasticsearch.server/org.elasticsearch.bootstrap.Elasticsearch',
       ollama: 'ollama',
-      cliproxyapi: 'cli-proxy-api',
       rnacos: 'rnacos',
       frankenphp: 'frankenphp',
       roadrunner: 'rr',

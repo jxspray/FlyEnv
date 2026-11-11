@@ -46,7 +46,6 @@ class Manager extends Base {
   N8N: any
   RustFS: any
   MkCert: any
-  CliProxyAPI: any
   Numa: any
   Rnacos: any
   FrankenPHP: any
@@ -351,12 +350,6 @@ class Manager extends Base {
             this.MkCert = res.default
           }
           versions.mkcert = this.MkCert.allInstalledVersions(setup)
-        } else if (type === 'cliproxyapi') {
-          if (!this.CliProxyAPI) {
-            const res = await import('../CliProxyAPI')
-            this.CliProxyAPI = res.default
-          }
-          versions.cliproxyapi = this.CliProxyAPI.allInstalledVersions(setup)
         } else if (type === 'numa') {
           if (!this.Numa) {
             const res = await import('../Numa')

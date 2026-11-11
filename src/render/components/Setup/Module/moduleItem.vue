@@ -19,18 +19,10 @@
     </div>
 
     <div class="inline-flex items-center gap-4">
-      <template v-if="isLock">
-        <el-tooltip placement="left" :content="I18nT('setup.module.licenseTips')">
-          <el-button size="small" link @click="toLicense">
-            <Lock class="w-[17px] h-[17px]" />
-          </el-button>
-        </el-tooltip>
-      </template>
-      <template v-else>
-        <el-button size="small" link @click.stop="showAddModule(undefined)">
-          <Plus class="w-[17px] h-[17px]" />
-        </el-button>
-      </template>
+      <el-button size="small" link @click.stop="showAddModule(undefined)">
+        <Plus class="w-[17px] h-[17px]" />
+      </el-button>
+
       <el-switch
         v-model="groupState"
         :loading="groupSetting"
@@ -71,7 +63,7 @@
   import { computed, ref, nextTick, reactive } from 'vue'
   import ModuleShowHide from '@/components/Setup/ModuleShowHide/index.vue'
   import type { AppModuleItem } from '@/core/type'
-  import { Delete, Edit, Lock, Plus } from '@element-plus/icons-vue'
+  import { Delete, Edit, Plus } from '@element-plus/icons-vue'
   import { AppStore } from '@/store/app'
   import { I18nT } from '@lang/index'
   import { ElMessageBox } from 'element-plus'
@@ -80,8 +72,6 @@
   import { AsyncComponentShow } from '@/util/AsyncComponent'
   import { ModuleCustomer } from '@/core/ModuleCustomer'
   import Base from '@/core/Base'
-  import { SetupStore } from '@/components/Setup/store'
-  import Router from '@/router'
   import { canSetModuleVisibility } from '@/core/ModuleVisibility'
   import type { AllAppModule } from '@/core/type'
 
@@ -201,22 +191,6 @@
           AppCustomerModule.saveModule()
         }
       })
-      .catch()
-  }
-
-  const setupStore = SetupStore()
-
-  const isLock = computed(() => {
-    return !setupStore.isActive && AppCustomerModule.module.length > 2
-  })
-
-  const toLicense = () => {
-    setupStore.tab = 'licenses'
-    appStore.currentPage = '/setup'
-    Router.push({
-      path: '/setup'
-    })
-      .then()
       .catch()
   }
 </script>

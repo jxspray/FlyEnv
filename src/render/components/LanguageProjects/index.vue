@@ -15,19 +15,10 @@
             ></el-input>
           </div>
           <div class="flex items-center gap-2">
-            <template v-if="isLock">
-              <el-tooltip placement="right" :content="I18nT('host.licenseTips')">
-                <el-button link @click="toLicense">
-                  <Lock class="w-[24px] h-[24px] p-[2px]" />
-                </el-button>
-              </el-tooltip>
-            </template>
-            <template v-else>
-              <slot name="header-actions" />
-              <el-button link @click.stop="project.addProject()">
-                <FolderAdd class="w-[24px] h-[24px] p-[2px]"></FolderAdd>
-              </el-button>
-            </template>
+            <slot name="header-actions" />
+            <el-button link @click.stop="project.addProject()">
+              <FolderAdd class="w-[24px] h-[24px] p-[2px]"></FolderAdd>
+            </el-button>
           </div>
         </div>
       </template>
@@ -375,15 +366,12 @@
   import { computed, nextTick, onBeforeUnmount, onMounted, type Ref, ref } from 'vue'
   import { I18nT } from '@lang/index'
   import { ProjectSetup } from './setup'
-  import { FolderAdd, Lock } from '@element-plus/icons-vue'
+  import { FolderAdd } from '@element-plus/icons-vue'
   import { BrewStore } from '@/store/brew'
   import { AsyncComponentShow } from '@/util/AsyncComponent'
   import { isEqual } from 'lodash-es'
   import { Project } from '@/util/Project'
   import type { AllAppModule } from '@/core/type'
-  import { SetupStore } from '@/components/Setup/store'
-  import Router from '@/router'
-  import { AppStore } from '@/store/app'
   import { join } from '@/util/path-browserify'
   import { shell } from '@/util/NodeFn'
   import { ProjectItem } from '@/components/LanguageProjects/ProjectItem'
@@ -441,23 +429,6 @@
   const projectPorts = computed(
     () => new Map(project.project.map((item) => [item.id, inspectProjectPorts(item)]))
   )
-
-  const appStore = AppStore()
-  const setupStore = SetupStore()
-
-  const isLock = computed(() => {
-    return !setupStore.isActive && project.project.length > 2
-  })
-
-  const toLicense = () => {
-    setupStore.tab = 'licenses'
-    appStore.currentPage = '/setup'
-    Router.push({
-      path: '/setup'
-    })
-      .then()
-      .catch()
-  }
 
   const tableData = computed(() => {
     const search = project.search.trim()
